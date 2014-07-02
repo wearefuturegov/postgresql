@@ -46,9 +46,14 @@ directory node['postgresql']['dir'] do
 end
 
 node['postgresql']['server']['packages'].each do |pg_pack|
-
   package pg_pack
+end
 
+directory File.dirname(node['postgresql']['server']['sysconfig_path']) do
+  owner "postgres"
+  group "postgres"
+  recursive true
+  action :create
 end
 
 template node['postgresql']['server']['sysconfig_path'] do
