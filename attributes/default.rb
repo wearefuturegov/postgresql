@@ -116,6 +116,7 @@ when "redhat", "centos", "scientific", "oracle"
   if node['platform_version'].to_f >= 6.0 && node['postgresql']['version'] != '8.4'
      default['postgresql']['dir'] = "/var/lib/pgsql/#{node['postgresql']['version']}/data"
      default['postgresql']['server']['service_name'] = "postgresql-#{node['postgresql']['version']}"
+     default['postgresql']['server']['sysconfig_path'] = "/etc/sysconfig/pgsql/#{node['postgresql']['server']['service_name']}"
   else
     default['postgresql']['dir'] = "/var/lib/pgsql/data"
     default['postgresql']['server']['service_name'] = "postgresql"
