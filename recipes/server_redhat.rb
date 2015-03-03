@@ -55,34 +55,33 @@ end
 # The systemd unit file does not support 'initdb' or 'upgrade' actions.
 # Use the postgresql-setup script instead.
 
-unless platform_family?("fedora") and node['platform_version'].to_i >= 16
+if platform_family?("fedora")
+  if node['platform_version'].to_i < 16
+    directory "/etc/sysconfig/pgsql" do
+      mode "0644"
+      recursive true
+      action :create
+    end
 
-  directory "/etc/sysconfig/pgsql" do
-    mode "0644"
-    recursive true
-    action :create
+    template "/etc/sysconfig/pgsql/#{svc_name}" do
+      source "pgsql.sysconfig.erb"
+      mode "0644"
+      notifies :restart, "service[postgresql]", :delayed
+    end
+  elsif node['platform_version'].to_i >= 16
+    execute "postgresql-setup initdb #{svc_name}" do
+      not_if { ::FileTest.exist?(File.join(dir, "PG_VERSION")) }
+    end
   end
-
-  template "/etc/sysconfig/pgsql/#{svc_name}" do
-    source "pgsql.sysconfig.erb"
-    mode "0644"
-    notifies :restart, "service[postgresql]", :delayed
-  end
-
-end
-
-if platform_family?("fedora") and node['platform_version'].to_i >= 16
-
-  execute "postgresql-setup initdb #{svc_name}" do
+elsif node["init_package"] == "systemd"
+  dot_version = node["postgresql"]["version"]
+  execute "/usr/pgsql-#{dot_version}/bin/postgresql#{dot_version.tr('.', '')}-setup initdb #{svc_name}" do
     not_if { ::FileTest.exist?(File.join(dir, "PG_VERSION")) }
   end
-
-else !platform_family?("suse") 
-
+elsif !platform_family?("suse")
   execute "/sbin/service #{svc_name} initdb #{initdb_locale}" do
     not_if { ::FileTest.exist?(File.join(dir, "PG_VERSION")) }
   end
-
 end
 
 include_recipe "postgresql::server_conf"
