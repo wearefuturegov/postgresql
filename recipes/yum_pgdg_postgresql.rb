@@ -34,6 +34,7 @@ repo_rpm_url, repo_rpm_filename, repo_rpm_package = pgdgrepo_rpm_info
 remote_file "#{Chef::Config[:file_cache_path]}/#{repo_rpm_filename}" do
   source repo_rpm_url
   mode "0644"
+  only_if %Q|[ "$(rpm -qa #{repo_rpm_filename[/(.*)\.rpm/, 1]}" = "" ]|
 end
 
 # Install the PGDG repository RPM from the local file
@@ -42,4 +43,5 @@ package repo_rpm_package do
   provider Chef::Provider::Package::Rpm
   source "#{Chef::Config[:file_cache_path]}/#{repo_rpm_filename}"
   action :install
+  only_if { ::File.exist?("#{Chef::Config[:file_cache_path]}/#{repo_rpm_filename}") }
 end
